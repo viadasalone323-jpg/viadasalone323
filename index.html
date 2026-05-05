@@ -410,6 +410,31 @@ function doSubmit() {
   var email = document.getElementById("f-email").value.trim();
   if (!nome || !cog || !email) { alert("Inserisci nome, cognome ed email."); return; }
   if (!Object.keys(sel).length && !pack) { alert("Seleziona almeno un prodotto o un pack."); return; }
+
+  // Controlla taglie magliette singole
+  if (sel["navy"]) {
+    var szNavy = document.getElementById("sz-navy").value;
+    if (!szNavy) { alert("Seleziona la taglia per la T-shirt Blu."); return; }
+  }
+  if (sel["white"]) {
+    var szWhite = document.getElementById("sz-white").value;
+    if (!szWhite) { alert("Seleziona la taglia per la T-shirt Bianca."); return; }
+  }
+
+  // Controlla taglie nei pack
+  if (pack === "full") {
+    if (!document.getElementById("ps-full-navy").value) { alert("Seleziona la taglia T-shirt Blu nel Pack Completo."); return; }
+    if (!document.getElementById("ps-full-white").value) { alert("Seleziona la taglia T-shirt Bianca nel Pack Completo."); return; }
+  }
+  if (pack === "duo") {
+    if (!document.getElementById("ps-duo-navy").value) { alert("Seleziona la taglia T-shirt Blu nel Pack Duo."); return; }
+    if (!document.getElementById("ps-duo-white").value) { alert("Seleziona la taglia T-shirt Bianca nel Pack Duo."); return; }
+  }
+  if (pack === "st") {
+    if (!document.getElementById("ps-st-col").value) { alert("Seleziona il colore della maglietta nel pack Maglia+Borsa."); return; }
+    if (!document.getElementById("ps-st-sz").value) { alert("Seleziona la taglia nel pack Maglia+Borsa."); return; }
+  }
+
   if (!giorno) { alert("Seleziona un giorno di ritiro."); return; }
   var items = [];
   var nomi = {navy:"T-shirt Blu", white:"T-shirt Bianca", tote:"Tote Bag"};
