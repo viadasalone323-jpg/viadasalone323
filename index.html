@@ -336,7 +336,7 @@ const PP={full:38,duo:32,st:24};
 const PL={full:"Pack Completo (€38)",duo:"Pack Duo (€32)",st:"Maglia+Borsa (€24)"};
 const GL={mar:"Martedì",mer:"Mercoledì",gio:"Giovedì",ven:"Venerdì"};
 let sel={},qty={navy:1,white:1,tote:1},pack=null,giorno=null;
-const SCRIPT_URL="YOUR_GOOGLE_APPS_SCRIPT_URL_HERE";
+const SCRIPT_URL="https://script.google.com/macros/s/AKfycbzX3t60n5arWhVMIwq8Lc-9M751HNIMfGhmZ7nus-sa8Ys8-odlSx1ue769IZG48HWyPQ/exec";
 
 function toggleP(id){
   if(sel[id]){delete sel[id];document.getElementById("card-"+id).classList.remove("on");}
@@ -399,7 +399,7 @@ function doSubmit(){
     ritiro:GL[giorno]+" 20:15-20:45",
     data:new Date().toLocaleString("it-IT")
   };
-  if(SCRIPT_URL&&SCRIPT_URL!=="YOUR_GOOGLE_APPS_SCRIPT_URL_HERE"){
+  if(SCRIPT_URL&&SCRIPT_URL!=="https://script.google.com/macros/s/AKfycbzX3t60n5arWhVMIwq8Lc-9M751HNIMfGhmZ7nus-sa8Ys8-odlSx1ue769IZG48HWyPQ/exec"){
     fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify(data)}).catch(()=>{});
   }
   document.getElementById("order-form").style.display="none";
