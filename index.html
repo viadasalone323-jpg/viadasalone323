@@ -344,11 +344,21 @@ var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzRq1xsyRbN0E5WM6O6nTm
 var sel = {}, qty = {navy:1, white:1, tote:1}, pack = null, giorno = null;
 
 function toggleP(id) {
-  if (sel[id]) { delete sel[id]; document.getElementById("card-"+id).classList.remove("on"); }
-  else { sel[id] = 1; document.getElementById("card-"+id).classList.add("on"); }
+  if (sel[id]) {
+    delete sel[id];
+    qty[id] = 0;
+    document.getElementById("card-"+id).classList.remove("on");
+    document.getElementById("qv-"+id).textContent = 0;
+  } else {
+    sel[id] = 1;
+    qty[id] = 1;
+    document.getElementById("card-"+id).classList.add("on");
+    document.getElementById("qv-"+id).textContent = 1;
+  }
   upd();
 }
 function chQ(id, d) {
+  if (!sel[id]) return;
   qty[id] = Math.max(1, (qty[id]||1) + d);
   document.getElementById("qv-"+id).textContent = qty[id];
   upd();
