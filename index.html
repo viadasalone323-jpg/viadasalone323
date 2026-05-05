@@ -322,13 +322,13 @@ main{max-width:660px;margin:0 auto;padding:2.5rem 1.25rem 1rem;}
     Cash · Revolut · PayPal · Quantità limitata
   </div>
 
-  <div class="success" id="success">
-    <div class="sico">✓</div>
-    <div class="stitle">Ordine Inviato!</div>
-    <div class="ssub" id="success-msg">Il tuo ordine è stato inviato con successo.</div>
-  </div>
-
 </main>
+
+<div class="success" id="success" style="max-width:660px;margin:0 auto;padding:4rem 1.25rem;">
+  <div class="sico">✓</div>
+  <div class="stitle">Ordine Inviato!</div>
+  <div class="ssub" id="success-msg">Il tuo ordine è stato inviato con successo.</div>
+</div>
 
 <script>
 const PR={navy:18,white:18,tote:8};
@@ -409,11 +409,13 @@ function doSubmit(){
   }).catch(()=>{});
 
   // Messaggio conferma con giorno scelto
+  const giornoTesto = GL[giorno] || "";
   document.getElementById("success-msg").innerHTML =
-    "Il tuo ordine è stato inviato con successo.<br><br>" +
-    "Potrai ritirarlo e pagare <strong>" + GL[giorno] + "</strong><br>" +
-    "dalle <strong>20:15 alle 20:45</strong> davanti alla sede.<br><br>" +
-    "<span style='font-size:11px;color:#aaa;letter-spacing:1px;text-transform:uppercase;'>Pagamento sul posto · Cash · Revolut · PayPal</span>";
+    "Il tuo ordine è andato a buon fine!<br><br>" +
+    "Ti aspettiamo <strong>" + giornoTesto + "</strong><br>" +
+    "dalle <strong>20:15 alle 20:45</strong><br>" +
+    "davanti alla sede per ritirare e pagare i tuoi prodotti.<br><br>" +
+    "<span style='font-size:11px;color:#aaa;letter-spacing:1px;text-transform:uppercase;'>Cash · Revolut · PayPal</span>";
 
   document.getElementById("order-form").style.display="none";
   document.getElementById("success").classList.add("show");
