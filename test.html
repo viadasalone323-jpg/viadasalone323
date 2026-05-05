@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Test</title></head>
+<body>
+<div id="form-section">
+  <button onclick="doSubmit()">INVIA TEST</button>
+</div>
+
+<div id="success" style="display:none; padding:40px; text-align:center; background:#f0f0f0;">
+  <h1>&#10003; Ordine Inviato!</h1>
+  <p id="success-msg"></p>
+</div>
+
+<script>
+function doSubmit() {
+  document.getElementById("form-section").style.display = "none";
+  document.getElementById("success-msg").innerHTML = "Messaggio di conferma funzionante!";
+  document.getElementById("success").style.display = "block";
+}
+</script>
+</body>
+</html>
