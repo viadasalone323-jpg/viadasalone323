@@ -399,9 +399,22 @@ function doSubmit(){
     ritiro:GL[giorno]+" 20:15-20:45",
     data:new Date().toLocaleString("it-IT")
   };
-  if(SCRIPT_URL&&SCRIPT_URL!=="https://script.google.com/macros/s/AKfycbzRq1xsyRbN0E5WM6O6nTmUFQ6_x-kF0NtJV4pghACeQeKFjdufzwe5agZ-rkKvuEas2w/exec"){
-    fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify(data)}).catch(()=>{});
-  }
+
+  // Invia al Google Sheet
+  fetch(SCRIPT_URL, {
+    method: "POST",
+    mode: "no-cors",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify(data)
+  }).catch(()=>{});
+
+  // Messaggio conferma con giorno scelto
+  document.getElementById("success-msg").innerHTML =
+    "Il tuo ordine è stato inviato con successo.<br><br>" +
+    "Potrai ritirarlo e pagare <strong>" + GL[giorno] + "</strong><br>" +
+    "dalle <strong>20:15 alle 20:45</strong> davanti alla sede.<br><br>" +
+    "<span style='font-size:11px;color:#aaa;letter-spacing:1px;text-transform:uppercase;'>Pagamento sul posto · Cash · Revolut · PayPal</span>";
+
   document.getElementById("order-form").style.display="none";
   document.getElementById("success").classList.add("show");
   window.scrollTo({top:0,behavior:"smooth"});
