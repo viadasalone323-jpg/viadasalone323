@@ -324,125 +324,128 @@ main{max-width:660px;margin:0 auto;padding:2.5rem 1.25rem 1rem;}
 
 </main>
 
-<div class="success" id="success" style="max-width:660px;margin:0 auto;padding:4rem 1.25rem;">
-  <div class="sico">✓</div>
-  <div class="stitle">Ordine Inviato!</div>
-  <div class="ssub" id="success-msg">Il tuo ordine è stato inviato con successo.</div>
+<div id="success" style="display:none; max-width:660px; margin:0 auto; padding:5rem 1.25rem; text-align:center; font-family:'Space Mono',monospace;">
+  <div style="font-size:56px; margin-bottom:1rem;">&#10003;</div>
+  <div style="font-family:'Oswald',sans-serif; font-size:26px; font-weight:700; letter-spacing:2px; text-transform:uppercase; margin-bottom:1.5rem; color:#111;">Ordine Inviato!</div>
+  <div id="success-msg" style="font-size:14px; color:#555; line-height:2.2; max-width:420px; margin:0 auto;"></div>
+</div>
+
+<div id="lightbox" style="display:none; position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,0.92); align-items:center; justify-content:center; padding:1rem;">
+  <div id="lb-close" style="position:fixed; top:16px; right:20px; width:38px; height:38px; background:rgba(255,255,255,0.1); border:1.5px solid rgba(255,255,255,0.25); border-radius:50%; color:#fff; font-size:20px; display:flex; align-items:center; justify-content:center; cursor:pointer; line-height:1;">&#x2715;</div>
+  <img id="lb-img" src="" alt="" style="max-width:90vw; max-height:88vh; border-radius:6px; object-fit:contain; display:block;">
 </div>
 
 <script>
-const PR={navy:18,white:18,tote:8};
-const PP={full:38,duo:32,st:24};
-const PL={full:"Pack Completo (€38)",duo:"Pack Duo (€32)",st:"Maglia+Borsa (€24)"};
-const GL={mar:"Martedì",mer:"Mercoledì",gio:"Giovedì",ven:"Venerdì"};
-let sel={},qty={navy:1,white:1,tote:1},pack=null,giorno=null;
-const SCRIPT_URL="https://script.google.com/macros/s/AKfycbzRq1xsyRbN0E5WM6O6nTmUFQ6_x-kF0NtJV4pghACeQeKFjdufzwe5agZ-rkKvuEas2w/exec";
+var PR = {navy:18, white:18, tote:8};
+var PP = {full:38, duo:32, st:24};
+var PL = {full:"Pack Completo (38)", duo:"Pack Duo (32)", st:"Maglia+Borsa (24)"};
+var GL = {mar:"Martedi", mer:"Mercoledi", gio:"Giovedi", ven:"Venerdi"};
+var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzRq1xsyRbN0E5WM6O6nTmUFQ6_x-kF0NtJV4pghACeQeKFjdufzwe5agZ-rkKvuEas2w/exec";
+var sel = {}, qty = {navy:1, white:1, tote:1}, pack = null, giorno = null;
 
-function toggleP(id){
-  if(sel[id]){delete sel[id];document.getElementById("card-"+id).classList.remove("on");}
-  else{sel[id]=1;document.getElementById("card-"+id).classList.add("on");}
+function toggleP(id) {
+  if (sel[id]) { delete sel[id]; document.getElementById("card-"+id).classList.remove("on"); }
+  else { sel[id] = 1; document.getElementById("card-"+id).classList.add("on"); }
   upd();
 }
-function chQ(id,d){
-  qty[id]=Math.max(1,(qty[id]||1)+d);
-  document.getElementById("qv-"+id).textContent=qty[id];
+function chQ(id, d) {
+  qty[id] = Math.max(1, (qty[id]||1) + d);
+  document.getElementById("qv-"+id).textContent = qty[id];
   upd();
 }
-function selPack(id){
-  ["full","duo","st"].forEach(p=>{
+function selPack(id) {
+  ["full","duo","st"].forEach(function(p) {
     document.getElementById("pack-"+p).classList.remove("on");
     document.getElementById("ps-"+p).classList.remove("show");
   });
-  pack=(pack===id)?null:id;
-  if(pack){document.getElementById("pack-"+pack).classList.add("on");document.getElementById("ps-"+pack).classList.add("show");}
+  pack = (pack === id) ? null : id;
+  if (pack) {
+    document.getElementById("pack-"+pack).classList.add("on");
+    document.getElementById("ps-"+pack).classList.add("show");
+  }
   upd();
 }
-function selGiorno(id){
-  ["mar","mer","gio","ven"].forEach(g=>document.getElementById("g-"+g).classList.remove("on"));
-  giorno=(giorno===id)?null:id;
-  if(giorno)document.getElementById("g-"+giorno).classList.add("on");
+function selGiorno(id) {
+  ["mar","mer","gio","ven"].forEach(function(g) { document.getElementById("g-"+g).classList.remove("on"); });
+  giorno = (giorno === id) ? null : id;
+  if (giorno) document.getElementById("g-"+giorno).classList.add("on");
 }
-function upd(){
-  let tot=0,parts=[];
-  const names={navy:"T-Blu",white:"T-Bianca",tote:"Tote"};
-  for(const id in sel){
-    const q=qty[id]||1,sz=document.getElementById("sz-"+id)?.value||"";
-    tot+=PR[id]*q;
-    parts.push(names[id]+(sz?" "+sz:"")+(q>1?" x"+q:""));
+function upd() {
+  var tot = 0, parts = [];
+  var names = {navy:"T-Blu", white:"T-Bianca", tote:"Tote"};
+  for (var id in sel) {
+    var q = qty[id]||1;
+    var szEl = document.getElementById("sz-"+id);
+    var sz = szEl ? szEl.value : "";
+    tot += PR[id] * q;
+    parts.push(names[id] + (sz ? " "+sz : "") + (q > 1 ? " x"+q : ""));
   }
-  if(pack)tot+=PP[pack];
-  document.getElementById("s-items").textContent=parts.length?parts.join(", "):"—";
-  document.getElementById("s-pack").textContent=pack?PL[pack]:"—";
-  document.getElementById("s-total").textContent="€"+tot;
+  if (pack) tot += PP[pack];
+  document.getElementById("s-items").textContent = parts.length ? parts.join(", ") : "—";
+  document.getElementById("s-pack").textContent = pack ? PL[pack] : "—";
+  document.getElementById("s-total").textContent = "\u20ac" + tot;
 }
-function doSubmit(){
-  const nome=document.getElementById("f-nome").value.trim();
-  const cog=document.getElementById("f-cog").value.trim();
-  const email=document.getElementById("f-email").value.trim();
-  if(!nome||!cog||!email){alert("Inserisci nome, cognome ed email.");return;}
-  if(!Object.keys(sel).length&&!pack){alert("Seleziona almeno un prodotto o un pack.");return;}
-  if(!giorno){alert("Seleziona un giorno di ritiro.");return;}
-  let items=[];
-  const names={navy:"T-shirt Blu",white:"T-shirt Bianca",tote:"Tote Bag"};
-  for(const id in sel){
-    const sz=document.getElementById("sz-"+id)?.value||"n/d";
-    items.push(names[id]+" taglia:"+sz+" x"+(qty[id]||1));
+function openLB(src) {
+  document.getElementById("lb-img").src = src;
+  var lb = document.getElementById("lightbox");
+  lb.style.display = "flex";
+  document.body.style.overflow = "hidden";
+}
+document.addEventListener("click", function(e) {
+  var lb = document.getElementById("lightbox");
+  if (e.target === lb || e.target.id === "lb-close") {
+    lb.style.display = "none";
+    document.body.style.overflow = "";
   }
-  if(pack)items.push(PL[pack]);
-  const data={
-    nome:nome+" "+cog,
-    email:email,
-    telefono:document.getElementById("f-tel").value.trim(),
-    ordine:items.join(" | "),
-    note:document.getElementById("f-note").value.trim(),
-    totale:document.getElementById("s-total").textContent,
-    ritiro:GL[giorno]+" 20:15-20:45",
-    data:new Date().toLocaleString("it-IT")
+});
+document.addEventListener("keydown", function(e) {
+  if (e.key === "Escape") {
+    document.getElementById("lightbox").style.display = "none";
+    document.body.style.overflow = "";
+  }
+});
+function doSubmit() {
+  var nome = document.getElementById("f-nome").value.trim();
+  var cog = document.getElementById("f-cog").value.trim();
+  var email = document.getElementById("f-email").value.trim();
+  if (!nome || !cog || !email) { alert("Inserisci nome, cognome ed email."); return; }
+  if (!Object.keys(sel).length && !pack) { alert("Seleziona almeno un prodotto o un pack."); return; }
+  if (!giorno) { alert("Seleziona un giorno di ritiro."); return; }
+  var items = [];
+  var nomi = {navy:"T-shirt Blu", white:"T-shirt Bianca", tote:"Tote Bag"};
+  for (var id in sel) {
+    var szEl = document.getElementById("sz-"+id);
+    var sz = szEl ? szEl.value : "n/d";
+    items.push(nomi[id] + " taglia:" + sz + " x" + (qty[id]||1));
+  }
+  if (pack) items.push(PL[pack]);
+  var data = {
+    nome: nome + " " + cog,
+    email: email,
+    telefono: document.getElementById("f-tel").value.trim(),
+    ordine: items.join(" | "),
+    note: document.getElementById("f-note").value.trim(),
+    totale: document.getElementById("s-total").textContent,
+    ritiro: GL[giorno] + " 20:15-20:45",
+    data: new Date().toLocaleString("it-IT")
   };
-
-  // Invia al Google Sheet
   fetch(SCRIPT_URL, {
     method: "POST",
     mode: "no-cors",
-    headers: {"Content-Type":"application/json"},
+    headers: {"Content-Type": "application/json"},
     body: JSON.stringify(data)
-  }).catch(()=>{});
-
-  // Messaggio conferma con giorno scelto
-  const giornoTesto = GL[giorno] || "";
+  }).catch(function() {});
+  document.getElementById("order-form").style.display = "none";
+  var giornoLabel = {mar:"Marted\u00ec", mer:"Mercoled\u00ec", gio:"Gioved\u00ec", ven:"Venerd\u00ec"};
   document.getElementById("success-msg").innerHTML =
-    "Il tuo ordine è andato a buon fine!<br><br>" +
-    "Ti aspettiamo <strong>" + giornoTesto + "</strong><br>" +
+    "Il tuo ordine \u00e8 andato a buon fine!<br><br>" +
+    "Ti aspettiamo <strong>" + giornoLabel[giorno] + "</strong><br>" +
     "dalle <strong>20:15 alle 20:45</strong><br>" +
     "davanti alla sede per ritirare e pagare i tuoi prodotti.<br><br>" +
-    "<span style='font-size:11px;color:#aaa;letter-spacing:1px;text-transform:uppercase;'>Cash · Revolut · PayPal</span>";
-
-  document.getElementById("order-form").style.display="none";
-  document.getElementById("success").classList.add("show");
-  window.scrollTo({top:0,behavior:"smooth"});
+    "<span style='font-size:11px; color:#aaa; letter-spacing:1px; text-transform:uppercase;'>Cash &middot; Revolut &middot; PayPal</span>";
+  document.getElementById("success").style.display = "block";
+  window.scrollTo({top: 0, behavior: "smooth"});
 }
-</script>
-
-<!-- LIGHTBOX -->
-<div class="lightbox" id="lightbox" onclick="closeLB(event)">
-  <div class="lightbox-close" onclick="closeLB()">✕</div>
-  <img class="lightbox-img" id="lb-img" src="" alt="">
-  <div class="lightbox-label" id="lb-label"></div>
-</div>
-
-<script>
-function openLB(src, label){
-  document.getElementById('lb-img').src = src;
-  document.getElementById('lb-label').textContent = label;
-  document.getElementById('lightbox').classList.add('open');
-  document.body.style.overflow = 'hidden';
-}
-function closeLB(e){
-  if(e && e.target !== document.getElementById('lightbox') && !e.target.classList.contains('lightbox-close')) return;
-  document.getElementById('lightbox').classList.remove('open');
-  document.body.style.overflow = '';
-}
-document.addEventListener('keydown', e => { if(e.key==='Escape') closeLB({target:document.getElementById('lightbox')}); });
 </script>
 </body>
 </html>
