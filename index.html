@@ -112,7 +112,7 @@ main{max-width:660px;margin:0 auto;padding:2.5rem 1.25rem 1rem;}
 .success.show{display:block;}
 .sico{font-size:52px;margin-bottom:1rem;}
 .stitle{font-family:var(--font-d);font-size:28px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;}
-.ssub{font-size:12px;color:var(--gray);line-height:1.9;max-width:380px;margin:0 auto;}
+.ssub{font-size:13px;color:var(--gray);line-height:2;max-width:400px;margin:0 auto;} .ssub strong{color:var(--black);}
 
 @media(max-width:480px){
   .fgrid,.psizes{grid-template-columns:1fr;}
@@ -324,8 +324,8 @@ main{max-width:660px;margin:0 auto;padding:2.5rem 1.25rem 1rem;}
 
   <div class="success" id="success">
     <div class="sico">✓</div>
-    <div class="stitle">Pre-ordine Inviato!</div>
-    <div class="ssub">Grazie! Ti contatteremo per confermare. Ricorda di presentarti davanti alla sede nel giorno scelto tra le 20:15 e le 20:45.</div>
+    <div class="stitle">Ordine Inviato!</div>
+    <div class="ssub" id="success-msg">Il tuo ordine è stato inviato con successo.</div>
   </div>
 
 </main>
@@ -336,7 +336,7 @@ const PP={full:38,duo:32,st:24};
 const PL={full:"Pack Completo (€38)",duo:"Pack Duo (€32)",st:"Maglia+Borsa (€24)"};
 const GL={mar:"Martedì",mer:"Mercoledì",gio:"Giovedì",ven:"Venerdì"};
 let sel={},qty={navy:1,white:1,tote:1},pack=null,giorno=null;
-const SCRIPT_URL="https://script.google.com/macros/s/AKfycbzX3t60n5arWhVMIwq8Lc-9M751HNIMfGhmZ7nus-sa8Ys8-odlSx1ue769IZG48HWyPQ/exec";
+const SCRIPT_URL="https://script.google.com/macros/s/AKfycbzRq1xsyRbN0E5WM6O6nTmUFQ6_x-kF0NtJV4pghACeQeKFjdufzwe5agZ-rkKvuEas2w/exec";
 
 function toggleP(id){
   if(sel[id]){delete sel[id];document.getElementById("card-"+id).classList.remove("on");}
@@ -399,7 +399,7 @@ function doSubmit(){
     ritiro:GL[giorno]+" 20:15-20:45",
     data:new Date().toLocaleString("it-IT")
   };
-  if(SCRIPT_URL&&SCRIPT_URL!=="https://script.google.com/macros/s/AKfycbzX3t60n5arWhVMIwq8Lc-9M751HNIMfGhmZ7nus-sa8Ys8-odlSx1ue769IZG48HWyPQ/exec"){
+  if(SCRIPT_URL&&SCRIPT_URL!=="https://script.google.com/macros/s/AKfycbzRq1xsyRbN0E5WM6O6nTmUFQ6_x-kF0NtJV4pghACeQeKFjdufzwe5agZ-rkKvuEas2w/exec"){
     fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify(data)}).catch(()=>{});
   }
   document.getElementById("order-form").style.display="none";
