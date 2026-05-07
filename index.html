@@ -340,19 +340,21 @@ var PR = {navy:18, white:18, tote:8};
 var PP = {full:38, duo:32, st:24};
 var PL = {full:"Pack Completo (€38)", duo:"Pack Duo (€32)", st:"Maglia+Borsa (€24)"};
 var GL = {mar:"Martedì", mer:"Mercoledì", gio:"Giovedì", ven:"Venerdì"};
-var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxd5iy5jKzv9aNMwMp_jcCLrbbDYub_VLix9CG8AQHnWzO8929j3PRc-K0PY5SdwbJHMQ/exec";
+var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxyNKed1_r6oNitKHQZ1pjxYTbzWU4N1C9IdUI6lGAOpz-e53V3VuLf_PdiOYDam_z1mA/exec";
 var sel = {}, qty = {navy:0, white:0, tote:0}, pack = null, giorno = null;
 var availability = {};
 
-// Carica disponibilità dal foglio Google
+// Carica disponibilità via JSONP (evita CORS)
 function loadAvailability() {
-  fetch(SCRIPT_URL + "?action=availability")
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      availability = data;
-      updateAllSelects();
-    })
-    .catch(function(e) { console.log("Disponibilità non caricata:", e); });
+  var script = document.createElement("script");
+  script.src = SCRIPT_URL + "?action=availability&callback=onAvailability";
+  script.onerror = function() { console.log("Disponibilità non caricata"); };
+  document.head.appendChild(script);
+}
+
+function onAvailability(data) {
+  availability = data;
+  updateAllSelects();
 }
 
 function updateAllSelects() {
