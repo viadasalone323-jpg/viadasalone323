@@ -150,6 +150,31 @@ main{max-width:660px;margin:0 auto;padding:2.5rem 1.25rem 1rem;}
   font-family:var(--font-d);font-size:13px;letter-spacing:3px;
   text-transform:uppercase;color:rgba(255,255,255,0.5);
 }
+
+/* LISTA D'ATTESA */
+.waitlist-box{background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:4px;padding:20px;margin-top:0;}
+.waitlist-intro{font-size:12px;color:var(--gray);line-height:1.8;margin-bottom:16px;}
+.waitlist-intro strong{color:var(--black);}
+.wl-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+.wl-btn{
+  border:1.5px solid rgba(0,0,0,0.12);border-radius:3px;
+  padding:7px 14px;font-family:var(--font-b);font-size:11px;
+  background:#fff;cursor:pointer;color:var(--black);
+  transition:border-color .15s,background .15s;
+  user-select:none;
+}
+.wl-btn:hover{border-color:rgba(0,0,0,0.25);}
+.wl-btn.on{border:2px solid var(--red);background:#fff9f8;color:var(--red);font-weight:700;}
+.wl-lbl{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gray);margin-bottom:8px;}
+.wl-submit{
+  margin-top:14px;padding:10px 20px;
+  background:var(--black);color:#fff;border:none;border-radius:3px;
+  font-family:var(--font-d);font-size:12px;font-weight:600;
+  letter-spacing:3px;text-transform:uppercase;cursor:pointer;
+  transition:background .15s;
+}
+.wl-submit:hover{background:#333;}
+.wl-success{display:none;font-size:12px;color:#27ae60;margin-top:10px;letter-spacing:1px;}
 </style>
 </head>
 <body>
@@ -264,6 +289,31 @@ main{max-width:660px;margin:0 auto;padding:2.5rem 1.25rem 1rem;}
         <select class="sizesel" id="ps-st-col"><option value="">— Colore —</option><option value="navy">Blu Navy</option><option value="white">Bianca</option></select></div>
       <div><div class="psizelbl">Taglia</div><select class="sizesel" id="ps-st-sz"><option value="">— Taglia —</option><option>S</option><option>M</option><option>L</option><option>XL</option></select></div>
     </div>
+  </div>
+
+
+  <div class="sec">Non hai trovato quello che cerchi?</div>
+  <div class="waitlist-box">
+    <div class="waitlist-intro">
+      Seleziona il colore e la taglia che vorresti — <strong>ti contatteremo via email se dovessimo fare una ristampa.</strong>
+    </div>
+    <div class="wl-lbl">Colore</div>
+    <div class="wl-row" id="wl-colors">
+      <button class="wl-btn" onclick="toggleWL('color','navy',this)">T-shirt Blu</button>
+      <button class="wl-btn" onclick="toggleWL('color','white',this)">T-shirt Bianca</button>
+      <button class="wl-btn" onclick="toggleWL('color','tote',this)">Tote Bag</button>
+    </div>
+    <div class="wl-lbl">Taglia</div>
+    <div class="wl-row" id="wl-sizes">
+      <button class="wl-btn" onclick="toggleWL('size','S',this)">S</button>
+      <button class="wl-btn" onclick="toggleWL('size','M',this)">M</button>
+      <button class="wl-btn" onclick="toggleWL('size','L',this)">L</button>
+      <button class="wl-btn" onclick="toggleWL('size','XL',this)">XL</button>
+    </div>
+    <div class="wl-lbl" style="margin-top:4px;">La tua email *</div>
+    <input class="finp" id="wl-email" type="email" placeholder="mario@email.com" style="margin-bottom:0;">
+    <button class="wl-submit" onclick="submitWaitlist()">Invia segnalazione</button>
+    <div class="wl-success" id="wl-success">✓ Segnalazione inviata! Ti contatteremo se dovessimo fare una ristampa.</div>
   </div>
 
   <div class="sec">Riepilogo ordine</div>
@@ -479,6 +529,51 @@ document.addEventListener("keydown", function(e) {
     document.body.style.overflow = "";
   }
 });
+
+
+// LISTA D'ATTESA
+var wlColors = [], wlSizes = [];
+
+function toggleWL(type, val, btn) {
+  if (type === 'color') {
+    var idx = wlColors.indexOf(val);
+    if (idx > -1) { wlColors.splice(idx,1); btn.classList.remove('on'); }
+    else { wlColors.push(val); btn.classList.add('on'); }
+  } else {
+    var idx = wlSizes.indexOf(val);
+    if (idx > -1) { wlSizes.splice(idx,1); btn.classList.remove('on'); }
+    else { wlSizes.push(val); btn.classList.add('on'); }
+  }
+}
+
+function submitWaitlist() {
+  var email = document.getElementById('wl-email').value.trim();
+  if (!email) { alert('Inserisci la tua email.'); return; }
+  if (!wlColors.length && !wlSizes.length) { alert('Seleziona almeno un colore o una taglia.'); return; }
+
+  var colorLabels = {navy:'T-shirt Blu', white:'T-shirt Bianca', tote:'Tote Bag'};
+  var coloriTesto = wlColors.map(function(c){ return colorLabels[c]||c; }).join(', ');
+
+  var data = {
+    type: 'waitlist',
+    email: email,
+    colori: coloriTesto || '—',
+    taglie: wlSizes.join(', ') || '—',
+    data: new Date().toLocaleString('it-IT')
+  };
+
+  fetch(SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(data)
+  }).catch(function(){});
+
+  document.getElementById('wl-success').style.display = 'block';
+  document.getElementById('wl-email').value = '';
+  wlColors = []; wlSizes = [];
+  document.querySelectorAll('.wl-btn').forEach(function(b){ b.classList.remove('on'); });
+}
 
 function doSubmit() {
   var nome = document.getElementById("f-nome").value.trim();
