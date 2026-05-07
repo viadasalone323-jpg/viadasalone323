@@ -16,11 +16,11 @@ input:focus{outline:none;border-color:#e4201b;}
 .btn{width:100%;padding:13px;border:none;border-radius:4px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:1px;}
 .btn-red{background:#e4201b;color:#fff;}
 .btn-black{background:#111;color:#fff;margin-top:8px;}
+.btn-gray{background:#eee;color:#333;margin-top:12px;}
 .btn:hover{opacity:0.9;}
 .card{background:#fff;border-radius:6px;padding:16px;margin:16px 0;border:1px solid rgba(0,0,0,0.08);}
 .lbl{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#888;margin-bottom:3px;}
 .val{font-size:15px;color:#111;font-weight:600;margin-bottom:14px;}
-.val:last-child{margin-bottom:0;}
 .total{font-size:36px;font-weight:700;color:#e4201b;}
 .badge{display:inline-block;padding:6px 16px;border-radius:3px;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;}
 .badge-ok{background:#27ae60;color:#fff;}
@@ -28,12 +28,11 @@ input:focus{outline:none;border-color:#e4201b;}
 .hidden{display:none;}
 .error{background:#fff0f0;border:1px solid #e4201b;color:#e4201b;padding:12px;border-radius:4px;margin-bottom:12px;font-size:13px;}
 .success-msg{background:#f0fff4;border:1px solid #27ae60;color:#27ae60;padding:12px;border-radius:4px;margin-top:12px;font-size:13px;font-weight:700;}
-.loading{text-align:center;color:#888;padding:20px;}
+.loading{text-align:center;color:#888;padding:20px;font-size:13px;}
 </style>
 </head>
 <body>
 
-<!-- SCHERMATA LOGIN -->
 <div class="box" id="screen-login">
   <div class="logo">VIA DA SALONE 323</div>
   <h1>Area Staff</h1>
@@ -43,13 +42,12 @@ input:focus{outline:none;border-color:#e4201b;}
   <button class="btn btn-red" onclick="checkPwd()">Accedi</button>
 </div>
 
-<!-- SCHERMATA SCANNER -->
 <div class="box hidden" id="screen-scanner">
   <div class="logo">VIA DA SALONE 323</div>
   <h1>Scanner Ordini</h1>
   <p>Inserisci il codice dell'ordine</p>
   <div id="scan-error" class="error hidden"></div>
-  <input type="text" id="code-input" placeholder="Es. VDS-AB3X7K" 
+  <input type="text" id="code-input" placeholder="Es. VDS-AB3X7K"
     style="text-transform:uppercase;letter-spacing:2px;"
     onkeydown="if(event.key==='Enter')cercaOrdine()"
     oninput="this.value=this.value.toUpperCase()">
@@ -57,7 +55,6 @@ input:focus{outline:none;border-color:#e4201b;}
   <div id="loading" class="loading hidden">Caricamento...</div>
 </div>
 
-<!-- SCHERMATA DETTAGLIO ORDINE -->
 <div class="box hidden" id="screen-ordine">
   <div class="logo">VIA DA SALONE 323</div>
   <h1>Pre-ordine</h1>
@@ -68,7 +65,7 @@ input:focus{outline:none;border-color:#e4201b;}
     <button class="btn btn-black" id="btn-ritirato" onclick="segnaRitirato()">✓ Segna come ritirato</button>
   </div>
   <div id="success-ritirato" class="success-msg hidden">✓ Ordine segnato come ritirato!</div>
-  <button class="btn" style="background:#eee;color:#333;margin-top:12px;" onclick="nuovaScan()">← Cerca altro ordine</button>
+  <button class="btn btn-gray" onclick="nuovaScan()">← Cerca altro ordine</button>
 </div>
 
 <script>
@@ -76,13 +73,10 @@ var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxyNKed1_r6oNitKHQZ1pj
 var PASSWORD = "vds323staff";
 var codiceCorrente = "";
 
-// Controlla se c'è già un codice nell'URL
 window.onload = function() {
   var params = new URLSearchParams(window.location.search);
   var code = params.get("code");
-  if (code) {
-    document.getElementById("code-input").value = code.toUpperCase();
-  }
+  if (code) document.getElementById("code-input").value = code.toUpperCase();
 };
 
 function checkPwd() {
@@ -90,7 +84,6 @@ function checkPwd() {
   if (pwd === PASSWORD) {
     document.getElementById("screen-login").classList.add("hidden");
     document.getElementById("screen-scanner").classList.remove("hidden");
-    // Se c'è già un codice nell'URL, cerca subito
     var code = document.getElementById("code-input").value;
     if (code) cercaOrdine();
   } else {
@@ -99,37 +92,40 @@ function checkPwd() {
   }
 }
 
+// Usa JSONP per leggere l'ordine (evita CORS)
 function cercaOrdine() {
   var code = document.getElementById("code-input").value.trim().toUpperCase();
   if (!code) { showScanError("Inserisci un codice."); return; }
-  
+
   document.getElementById("scan-error").classList.add("hidden");
   document.getElementById("loading").classList.remove("hidden");
 
-  fetch(SCRIPT_URL, {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({type:"cerca", codice:code})
-  })
-  .then(function(r){ return r.json(); })
-  .then(function(data){
+  var callbackName = "cb_" + Date.now();
+  window[callbackName] = function(data) {
     document.getElementById("loading").classList.add("hidden");
-    if (!data.found) {
+    delete window[callbackName];
+    document.head.removeChild(script);
+    if (!data || !data.found) {
       showScanError("Codice non trovato: " + code);
       return;
     }
     mostraOrdine(data);
-  })
-  .catch(function(){
+  };
+
+  var script = document.createElement("script");
+  script.src = SCRIPT_URL + "?action=cerca&codice=" + encodeURIComponent(code) + "&callback=" + callbackName;
+  script.onerror = function() {
     document.getElementById("loading").classList.add("hidden");
     showScanError("Errore di connessione. Riprova.");
-  });
+    delete window[callbackName];
+  };
+  document.head.appendChild(script);
 }
 
 function mostraOrdine(data) {
   codiceCorrente = data.codice;
   document.getElementById("ordine-code").textContent = "#" + data.codice;
-  
+
   var badge = document.getElementById("ordine-badge");
   if (data.ritirato) {
     badge.innerHTML = '<span class="badge badge-ok">✓ Già ritirato</span>';
@@ -140,7 +136,7 @@ function mostraOrdine(data) {
     document.getElementById("btn-ritirato").disabled = false;
     document.getElementById("btn-ritirato").textContent = "✓ Segna come ritirato";
   }
-  
+
   document.getElementById("ordine-details").innerHTML =
     '<div class="lbl">Cliente</div><div class="val">' + data.nome + '</div>' +
     '<div class="lbl">Ordine</div><div class="val">' + data.ordine + '</div>' +
@@ -158,18 +154,17 @@ function segnaRitirato() {
   btn.disabled = true;
   btn.textContent = "Invio...";
 
+  // Per segnare ritirato usiamo no-cors (non ci serve la risposta)
   fetch(SCRIPT_URL, {
     method: "POST",
+    mode: "no-cors",
     headers: {"Content-Type":"application/json"},
     body: JSON.stringify({type:"ritirato", codice:codiceCorrente})
-  })
-  .then(function(r){ return r.json(); })
-  .then(function(){
+  }).then(function() {
     document.getElementById("btn-ritirato-wrap").classList.add("hidden");
     document.getElementById("success-ritirato").classList.remove("hidden");
     document.getElementById("ordine-badge").innerHTML = '<span class="badge badge-ok">✓ Ritirato ora</span>';
-  })
-  .catch(function(){
+  }).catch(function() {
     btn.disabled = false;
     btn.textContent = "✓ Segna come ritirato";
     alert("Errore. Riprova.");
