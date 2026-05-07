@@ -609,7 +609,21 @@ function doSubmit() {
     var sz = szEl ? szEl.value : "n/d";
     items.push(nomi[id] + " taglia:" + sz + " x" + (qty[id]||1));
   }
-  if (pack) items.push(PL[pack]);
+  // Aggiungi taglie del pack al testo ordine
+  if (pack === "full") {
+    var szBluFull = document.getElementById("ps-full-navy").value || "n/d";
+    var szWhiteFull = document.getElementById("ps-full-white").value || "n/d";
+    items.push("Pack Completo - T-shirt Blu taglia:" + szBluFull + " x1 | T-shirt Bianca taglia:" + szWhiteFull + " x1 | Tote Bag x1");
+  } else if (pack === "duo") {
+    var szBluDuo = document.getElementById("ps-duo-navy").value || "n/d";
+    var szWhiteDuo = document.getElementById("ps-duo-white").value || "n/d";
+    items.push("Pack Duo - T-shirt Blu taglia:" + szBluDuo + " x1 | T-shirt Bianca taglia:" + szWhiteDuo + " x1");
+  } else if (pack === "st") {
+    var colSt = document.getElementById("ps-st-col").value || "navy";
+    var szSt = document.getElementById("ps-st-sz").value || "n/d";
+    var nomeColore = colSt === "navy" ? "T-shirt Blu" : "T-shirt Bianca";
+    items.push("Pack Maglia+Borsa - " + nomeColore + " taglia:" + szSt + " x1 | Tote Bag x1");
+  }
 
   var data = {
     nome: nome + " " + cog,
