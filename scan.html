@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VDS 323 — Scanner Ordini</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:Arial,sans-serif;background:#111;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+.box{background:#f5f2ec;border-radius:10px;padding:32px;width:100%;max-width:420px;}
+.logo{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#e4201b;font-weight:700;margin-bottom:6px;}
+h1{color:#111;font-size:22px;margin-bottom:4px;}
+p{color:#888;font-size:13px;margin-bottom:20px;}
+input{width:100%;padding:12px;font-size:16px;border:1px solid rgba(0,0,0,0.15);border-radius:4px;margin-bottom:10px;font-family:Arial;}
+input:focus{outline:none;border-color:#e4201b;}
+.btn{width:100%;padding:13px;border:none;border-radius:4px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:1px;}
+.btn-red{background:#e4201b;color:#fff;}
+.btn-black{background:#111;color:#fff;margin-top:8px;}
+.btn:hover{opacity:0.9;}
+.card{background:#fff;border-radius:6px;padding:16px;margin:16px 0;border:1px solid rgba(0,0,0,0.08);}
+.lbl{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#888;margin-bottom:3px;}
+.val{font-size:15px;color:#111;font-weight:600;margin-bottom:14px;}
+.val:last-child{margin-bottom:0;}
+.total{font-size:36px;font-weight:700;color:#e4201b;}
+.badge{display:inline-block;padding:6px 16px;border-radius:3px;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;}
+.badge-ok{background:#27ae60;color:#fff;}
+.badge-wait{background:#f39c12;color:#fff;}
+.hidden{display:none;}
+.error{background:#fff0f0;border:1px solid #e4201b;color:#e4201b;padding:12px;border-radius:4px;margin-bottom:12px;font-size:13px;}
+.success-msg{background:#f0fff4;border:1px solid #27ae60;color:#27ae60;padding:12px;border-radius:4px;margin-top:12px;font-size:13px;font-weight:700;}
+.loading{text-align:center;color:#888;padding:20px;}
+</style>
+</head>
+<body>
+
+<!-- SCHERMATA LOGIN -->
+<div class="box" id="screen-login">
+  <div class="logo">VIA DA SALONE 323</div>
+  <h1>Area Staff</h1>
+  <p>Inserisci la password per accedere</p>
+  <div id="login-error" class="error hidden">Password errata. Riprova.</div>
+  <input type="password" id="pwd-input" placeholder="Password" onkeydown="if(event.key==='Enter')checkPwd()">
+  <button class="btn btn-red" onclick="checkPwd()">Accedi</button>
+</div>
+
+<!-- SCHERMATA SCANNER -->
+<div class="box hidden" id="screen-scanner">
+  <div class="logo">VIA DA SALONE 323</div>
+  <h1>Scanner Ordini</h1>
+  <p>Inserisci il codice dell'ordine</p>
+  <div id="scan-error" class="error hidden"></div>
+  <input type="text" id="code-input" placeholder="Es. VDS-AB3X7K" 
+    style="text-transform:uppercase;letter-spacing:2px;"
+    onkeydown="if(event.key==='Enter')cercaOrdine()"
+    oninput="this.value=this.value.toUpperCase()">
+  <button class="btn btn-red" onclick="cercaOrdine()">Cerca ordine</button>
+  <div id="loading" class="loading hidden">Caricamento...</div>
+</div>
+
+<!-- SCHERMATA DETTAGLIO ORDINE -->
+<div class="box hidden" id="screen-ordine">
+  <div class="logo">VIA DA SALONE 323</div>
+  <h1>Pre-ordine</h1>
+  <div id="ordine-code" style="font-size:12px;letter-spacing:2px;color:#888;text-transform:uppercase;margin-bottom:12px;"></div>
+  <div id="ordine-badge"></div>
+  <div class="card" id="ordine-details"></div>
+  <div id="btn-ritirato-wrap">
+    <button class="btn btn-black" id="btn-ritirato" onclick="segnaRitirato()">✓ Segna come ritirato</button>
+  </div>
+  <div id="success-ritirato" class="success-msg hidden">✓ Ordine segnato come ritirato!</div>
+  <button class="btn" style="background:#eee;color:#333;margin-top:12px;" onclick="nuovaScan()">← Cerca altro ordine</button>
+</div>
+
+<script>
+var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxyNKed1_r6oNitKHQZ1pjxYTbzWU4N1C9IdUI6lGAOpz-e53V3VuLf_PdiOYDam_z1mA/exec";
+var PASSWORD = "vds323staff";
+var codiceCorrente = "";
+
+// Controlla se c'è già un codice nell'URL
+window.onload = function() {
+  var params = new URLSearchParams(window.location.search);
+  var code = params.get("code");
+  if (code) {
+    document.getElementById("code-input").value = code.toUpperCase();
+  }
+};
+
+function checkPwd() {
+  var pwd = document.getElementById("pwd-input").value;
+  if (pwd === PASSWORD) {
+    document.getElementById("screen-login").classList.add("hidden");
+    document.getElementById("screen-scanner").classList.remove("hidden");
+    // Se c'è già un codice nell'URL, cerca subito
+    var code = document.getElementById("code-input").value;
+    if (code) cercaOrdine();
+  } else {
+    document.getElementById("login-error").classList.remove("hidden");
+    document.getElementById("pwd-input").value = "";
+  }
+}
+
+function cercaOrdine() {
+  var code = document.getElementById("code-input").value.trim().toUpperCase();
+  if (!code) { showScanError("Inserisci un codice."); return; }
+  
+  document.getElementById("scan-error").classList.add("hidden");
+  document.getElementById("loading").classList.remove("hidden");
+
+  fetch(SCRIPT_URL, {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({type:"cerca", codice:code})
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(data){
+    document.getElementById("loading").classList.add("hidden");
+    if (!data.found) {
+      showScanError("Codice non trovato: " + code);
+      return;
+    }
+    mostraOrdine(data);
+  })
+  .catch(function(){
+    document.getElementById("loading").classList.add("hidden");
+    showScanError("Errore di connessione. Riprova.");
+  });
+}
+
+function mostraOrdine(data) {
+  codiceCorrente = data.codice;
+  document.getElementById("ordine-code").textContent = "#" + data.codice;
+  
+  var badge = document.getElementById("ordine-badge");
+  if (data.ritirato) {
+    badge.innerHTML = '<span class="badge badge-ok">✓ Già ritirato</span>';
+    document.getElementById("btn-ritirato-wrap").classList.add("hidden");
+  } else {
+    badge.innerHTML = '<span class="badge badge-wait">⏳ Da ritirare</span>';
+    document.getElementById("btn-ritirato-wrap").classList.remove("hidden");
+    document.getElementById("btn-ritirato").disabled = false;
+    document.getElementById("btn-ritirato").textContent = "✓ Segna come ritirato";
+  }
+  
+  document.getElementById("ordine-details").innerHTML =
+    '<div class="lbl">Cliente</div><div class="val">' + data.nome + '</div>' +
+    '<div class="lbl">Ordine</div><div class="val">' + data.ordine + '</div>' +
+    '<div class="lbl">Ritiro</div><div class="val">' + data.ritiro + '</div>' +
+    '<div class="lbl">Totale da pagare</div><div class="val total">' + data.totale + '</div>';
+
+  document.getElementById("success-ritirato").classList.add("hidden");
+  document.getElementById("screen-scanner").classList.add("hidden");
+  document.getElementById("screen-ordine").classList.remove("hidden");
+}
+
+function segnaRitirato() {
+  if (!confirm("Confermi il ritiro di questo ordine?")) return;
+  var btn = document.getElementById("btn-ritirato");
+  btn.disabled = true;
+  btn.textContent = "Invio...";
+
+  fetch(SCRIPT_URL, {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({type:"ritirato", codice:codiceCorrente})
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(){
+    document.getElementById("btn-ritirato-wrap").classList.add("hidden");
+    document.getElementById("success-ritirato").classList.remove("hidden");
+    document.getElementById("ordine-badge").innerHTML = '<span class="badge badge-ok">✓ Ritirato ora</span>';
+  })
+  .catch(function(){
+    btn.disabled = false;
+    btn.textContent = "✓ Segna come ritirato";
+    alert("Errore. Riprova.");
+  });
+}
+
+function nuovaScan() {
+  document.getElementById("code-input").value = "";
+  document.getElementById("screen-ordine").classList.add("hidden");
+  document.getElementById("screen-scanner").classList.remove("hidden");
+}
+
+function showScanError(msg) {
+  var el = document.getElementById("scan-error");
+  el.textContent = msg;
+  el.classList.remove("hidden");
+}
+</script>
+</body>
+</html>
