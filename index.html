@@ -338,10 +338,64 @@ main{max-width:660px;margin:0 auto;padding:2.5rem 1.25rem 1rem;}
 <script>
 var PR = {navy:18, white:18, tote:8};
 var PP = {full:38, duo:32, st:24};
-var PL = {full:"Pack Completo (38)", duo:"Pack Duo (32)", st:"Maglia+Borsa (24)"};
-var GL = {mar:"Martedi", mer:"Mercoledi", gio:"Giovedi", ven:"Venerdi"};
-var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzRq1xsyRbN0E5WM6O6nTmUFQ6_x-kF0NtJV4pghACeQeKFjdufzwe5agZ-rkKvuEas2w/exec";
-var sel = {}, qty = {navy:1, white:1, tote:1}, pack = null, giorno = null;
+var PL = {full:"Pack Completo (€38)", duo:"Pack Duo (€32)", st:"Maglia+Borsa (€24)"};
+var GL = {mar:"Martedì", mer:"Mercoledì", gio:"Giovedì", ven:"Venerdì"};
+var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxd5iy5jKzv9aNMwMp_jcCLrbbDYub_VLix9CG8AQHnWzO8929j3PRc-K0PY5SdwbJHMQ/exec";
+var sel = {}, qty = {navy:0, white:0, tote:0}, pack = null, giorno = null;
+var availability = {};
+
+// Carica disponibilità dal foglio Google
+function loadAvailability() {
+  fetch(SCRIPT_URL + "?action=availability")
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      availability = data;
+      updateAllSelects();
+    })
+    .catch(function(e) { console.log("Disponibilità non caricata:", e); });
+}
+
+function updateAllSelects() {
+  ["navy","white"].forEach(function(prod) {
+    updateSelect(document.getElementById("sz-"+prod), prod);
+    updateSelect(document.getElementById("ps-full-"+prod), prod);
+    if (prod === "navy") updateSelect(document.getElementById("ps-duo-navy"), prod);
+    if (prod === "white") {
+      updateSelect(document.getElementById("ps-duo-white"), prod);
+      updateSelect(document.getElementById("ps-st-sz"), prod);
+    }
+  });
+  // Tote
+  if (availability.tote && availability.tote.unica <= 0) {
+    var c = document.getElementById("card-tote");
+    if (c) {
+      c.style.opacity = "0.5";
+      c.style.pointerEvents = "none";
+      c.querySelector(".pprice").innerHTML = '<span style="color:#bbb;font-size:13px;letter-spacing:1px;">ESAURITO</span>';
+    }
+  }
+}
+
+function updateSelect(el, prod) {
+  if (!el) return;
+  var cur = el.value;
+  while (el.options.length > 1) el.remove(1);
+  ["S","M","L","XL"].forEach(function(sz) {
+    var opt = document.createElement("option");
+    opt.value = sz;
+    var q = (availability[prod] && availability[prod][sz] !== undefined) ? availability[prod][sz] : 999;
+    if (q <= 0) {
+      opt.textContent = sz + " — Esaurito";
+      opt.disabled = true;
+    } else {
+      opt.textContent = sz;
+    }
+    el.appendChild(opt);
+  });
+  if (cur) el.value = cur;
+}
+
+document.addEventListener("DOMContentLoaded", loadAvailability);
 
 function toggleP(id) {
   if (sel[id]) {
@@ -357,12 +411,14 @@ function toggleP(id) {
   }
   upd();
 }
+
 function chQ(id, d) {
   if (!sel[id]) return;
   qty[id] = Math.max(1, (qty[id]||1) + d);
   document.getElementById("qv-"+id).textContent = qty[id];
   upd();
 }
+
 function selPack(id) {
   ["full","duo","st"].forEach(function(p) {
     document.getElementById("pack-"+p).classList.remove("on");
@@ -375,11 +431,15 @@ function selPack(id) {
   }
   upd();
 }
+
 function selGiorno(id) {
-  ["mar","mer","gio","ven"].forEach(function(g) { document.getElementById("g-"+g).classList.remove("on"); });
+  ["mar","mer","gio","ven"].forEach(function(g) {
+    document.getElementById("g-"+g).classList.remove("on");
+  });
   giorno = (giorno === id) ? null : id;
   if (giorno) document.getElementById("g-"+giorno).classList.add("on");
 }
+
 function upd() {
   var tot = 0, parts = [];
   var names = {navy:"T-Blu", white:"T-Bianca", tote:"Tote"};
@@ -393,14 +453,16 @@ function upd() {
   if (pack) tot += PP[pack];
   document.getElementById("s-items").textContent = parts.length ? parts.join(", ") : "—";
   document.getElementById("s-pack").textContent = pack ? PL[pack] : "—";
-  document.getElementById("s-total").textContent = "\u20ac" + tot;
+  document.getElementById("s-total").textContent = "€" + tot;
 }
+
 function openLB(src) {
   document.getElementById("lb-img").src = src;
   var lb = document.getElementById("lightbox");
   lb.style.display = "flex";
   document.body.style.overflow = "hidden";
 }
+
 document.addEventListener("click", function(e) {
   var lb = document.getElementById("lightbox");
   if (e.target === lb || e.target.id === "lb-close") {
@@ -408,12 +470,14 @@ document.addEventListener("click", function(e) {
     document.body.style.overflow = "";
   }
 });
+
 document.addEventListener("keydown", function(e) {
   if (e.key === "Escape") {
     document.getElementById("lightbox").style.display = "none";
     document.body.style.overflow = "";
   }
 });
+
 function doSubmit() {
   var nome = document.getElementById("f-nome").value.trim();
   var cog = document.getElementById("f-cog").value.trim();
@@ -421,17 +485,12 @@ function doSubmit() {
   if (!nome || !cog || !email) { alert("Inserisci nome, cognome ed email."); return; }
   if (!Object.keys(sel).length && !pack) { alert("Seleziona almeno un prodotto o un pack."); return; }
 
-  // Controlla taglie magliette singole
   if (sel["navy"]) {
-    var szNavy = document.getElementById("sz-navy").value;
-    if (!szNavy) { alert("Seleziona la taglia per la T-shirt Blu."); return; }
+    if (!document.getElementById("sz-navy").value) { alert("Seleziona la taglia per la T-shirt Blu."); return; }
   }
   if (sel["white"]) {
-    var szWhite = document.getElementById("sz-white").value;
-    if (!szWhite) { alert("Seleziona la taglia per la T-shirt Bianca."); return; }
+    if (!document.getElementById("sz-white").value) { alert("Seleziona la taglia per la T-shirt Bianca."); return; }
   }
-
-  // Controlla taglie nei pack
   if (pack === "full") {
     if (!document.getElementById("ps-full-navy").value) { alert("Seleziona la taglia T-shirt Blu nel Pack Completo."); return; }
     if (!document.getElementById("ps-full-white").value) { alert("Seleziona la taglia T-shirt Bianca nel Pack Completo."); return; }
@@ -441,11 +500,11 @@ function doSubmit() {
     if (!document.getElementById("ps-duo-white").value) { alert("Seleziona la taglia T-shirt Bianca nel Pack Duo."); return; }
   }
   if (pack === "st") {
-    if (!document.getElementById("ps-st-col").value) { alert("Seleziona il colore della maglietta nel pack Maglia+Borsa."); return; }
+    if (!document.getElementById("ps-st-col").value) { alert("Seleziona il colore nel pack Maglia+Borsa."); return; }
     if (!document.getElementById("ps-st-sz").value) { alert("Seleziona la taglia nel pack Maglia+Borsa."); return; }
   }
-
   if (!giorno) { alert("Seleziona un giorno di ritiro."); return; }
+
   var items = [];
   var nomi = {navy:"T-shirt Blu", white:"T-shirt Bianca", tote:"Tote Bag"};
   for (var id in sel) {
@@ -454,6 +513,7 @@ function doSubmit() {
     items.push(nomi[id] + " taglia:" + sz + " x" + (qty[id]||1));
   }
   if (pack) items.push(PL[pack]);
+
   var data = {
     nome: nome + " " + cog,
     email: email,
@@ -464,22 +524,24 @@ function doSubmit() {
     ritiro: GL[giorno] + " 20:15-20:45",
     data: new Date().toLocaleString("it-IT")
   };
+
   fetch(SCRIPT_URL, {
     method: "POST",
     mode: "no-cors",
-    headers: {"Content-Type": "application/json"},
+    headers: {"Content-Type":"application/json"},
     body: JSON.stringify(data)
   }).catch(function() {});
+
   document.getElementById("order-form").style.display = "none";
-  var giornoLabel = {mar:"Marted\u00ec", mer:"Mercoled\u00ec", gio:"Gioved\u00ec", ven:"Venerd\u00ec"};
+  var gLabel = {mar:"Martedì", mer:"Mercoledì", gio:"Giovedì", ven:"Venerdì"};
   document.getElementById("success-msg").innerHTML =
-    "Il tuo ordine \u00e8 andato a buon fine!<br><br>" +
-    "Ti aspettiamo <strong>" + giornoLabel[giorno] + "</strong><br>" +
+    "Il tuo ordine è andato a buon fine!<br><br>" +
+    "Ti aspettiamo <strong>" + gLabel[giorno] + "</strong><br>" +
     "dalle <strong>20:15 alle 20:45</strong><br>" +
     "davanti alla sede per ritirare e pagare i tuoi prodotti.<br><br>" +
-    "<span style='font-size:11px; color:#aaa; letter-spacing:1px; text-transform:uppercase;'>Cash &middot; Revolut &middot; PayPal</span>";
+    "<span style='font-size:11px; color:#aaa; letter-spacing:1px; text-transform:uppercase;'>Cash · Revolut · PayPal</span>";
   document.getElementById("success").style.display = "block";
-  window.scrollTo({top: 0, behavior: "smooth"});
+  window.scrollTo({top:0, behavior:"smooth"});
 }
 </script>
 </body>
